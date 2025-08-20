@@ -1,5 +1,5 @@
-# Navigate to the /mobile-node directory
-cd ../mobile-node || { echo "Directory /mobile-node not found"; exit 1; }
+# Navigate to the mobile-node directory
+cd mobile-node || { echo "Directory mobile-node not found"; exit 1; }
 
 echo "#---------------# Building mobile-node #---------------#"
 

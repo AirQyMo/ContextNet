@@ -1,11 +1,11 @@
 echo "#-----------------# Compiling auxiliares #-----------------#"
-./compile-aux.sh
+bash scripts/compile-aux.sh
 
-echo "#-----------------# Compiling group-definer #-----------------#"
-./compile-gd.sh
+# echo "#-----------------# Compiling group-definer #-----------------#"
+# bash scripts/compile-gd.sh
 
 echo "#-----------------# Compiling processing-node #-----------------#"
-./compile-pn.sh
+bash scripts/compile-pn.sh
 
 echo "#-----------------# Compiling mobile-node #-----------------#"
-./compile-mn.sh
+bash scripts/compile-mn.sh

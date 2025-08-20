@@ -1,3 +1,3 @@
-cd ../auxiliares
+cd auxiliares
 
 mvn clean install

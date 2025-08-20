@@ -1,3 +1,3 @@
-cd ../processing-node
+cd processing-node
 
 mvn clean install

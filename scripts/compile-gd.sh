@@ -1,3 +1,3 @@
-cd ../group-definer
+cd group-definer
 
 mvn clean install
