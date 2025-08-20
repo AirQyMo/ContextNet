@@ -1,5 +1,3 @@
-**/target/classes
-**/target/generated-sources
-**/target/maven-archiver
-**/target/maven-status
+target/
+**/target/
 zk-single-kafka-single/
