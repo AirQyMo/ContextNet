@@ -11,14 +11,6 @@ import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.Properties;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.lang.reflect.Array;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,9 +30,7 @@ import main.java.ckafka.mobile.tasks.SendLocationTask;
 public class MobileNode extends CKMobileNode {
     // Valid user input options
     private static final String OPTION_GROUPCAST = "G";
-    private static final String OPTION_UNICAST = "I";
     private static final String OPTION_PN = "P";
-    private static final String OPTION_REGISTER = "R";
     private static final String OPTION_EXIT = "Z";
 
     private ZoneId zoneId = ZoneId.of("America/Sao_Paulo");
@@ -78,31 +68,16 @@ public class MobileNode extends CKMobileNode {
         Map<String, Consumer<Scanner>> optionsMap = new HashMap<>();
 
         // Maps options to corresponding functions
-        optionsMap.put(OPTION_UNICAST, this::sendUnicastMessage);
+        // optionsMap.put(OPTION_UNICAST, this::sendUnicastMessage);
         optionsMap.put(OPTION_PN, this::enterMessageToPN);
         optionsMap.put(OPTION_GROUPCAST, this::sendGroupcastMessage);
         optionsMap.put(OPTION_EXIT, scanner -> fim = true);
-        optionsMap.put(OPTION_REGISTER, this::registerClass);
-
-        Properties properties = new Properties();
-        try {
-            properties.loadFromXML(new FileInputStream("./properties.xml"));
-            this.local = properties.getProperty("placeTag");
-            System.out.println("local = " + local);          
-        } catch (IOException e) {
-            System.out.println("Error reading properties file: " + e.getMessage());
-            return;
-        }
-
-        // get matriculas from csv in the UserX folder
-        File file = new File("./matriculas.csv");
 
         // Main loop that continues until the 'fim' variable is true
         while (!fim) {
-            studentIDs = updateStudentIDs(file);
 
             // Requests the user's option
-            System.out.print("(T) Change location | (R) Register class | (Z) to finish)? ");
+            System.out.print("(G) Groupcast message | (P) Send message to Processing Node | (Z) to finish)? ");
             String linha = keyboard.nextLine().trim().toUpperCase();
             System.out.printf("Your option was %s. ", linha);
 
@@ -117,32 +92,6 @@ public class MobileNode extends CKMobileNode {
         keyboard.close();
         System.out.println("END!");
         System.exit(0);
-    }
-
-    private ArrayList<Integer> updateStudentIDs(File ids_file) {
-        ArrayList<Integer> ids = new ArrayList<>();           
-        // Read the file and store the matriculas in the studentIDs list
-        studentIDs.clear();
-        try (BufferedReader br = new BufferedReader(new FileReader(ids_file))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                // Assuming the matricula is the first column in the CSV
-                String[] values = line.split(",");
-                if (values.length > 0) {
-                    for (String value : values) {
-                        if (!value.trim().isEmpty()) {
-                            studentIDs.add(Integer.parseInt(value.trim()));
-                        }
-                    }
-                }
-            }
-        } 
-        catch (IOException e) {
-            System.out.println("Error reading matriculas file: " + e.getMessage());
-            return null;
-        }
-
-        return studentIDs;
     }
 
     /**
@@ -196,7 +145,6 @@ public class MobileNode extends CKMobileNode {
             if (swp.getTopic().equals("StudentAttendanceCheck")) {
                 String str = new String(swp.getMessage(), StandardCharsets.UTF_8);
                 System.out.println("Attendance check received. Message: " + str);
-                returnAttendanceCheck(str);
             } else {
                 String str = new String(swp.getMessage(), StandardCharsets.UTF_8);
                 logger.info("Message: " + str);
@@ -220,49 +168,19 @@ public class MobileNode extends CKMobileNode {
      * Sends message to the Processing Node
      * @param messageText
      * @param topic
-     * 
+     *
      * OBS: For some reason, the message is only sent when the topic is "AppModel"
      */
     private void sendMessageToPN(String messageText, String topic) {
         ApplicationMessage message = createDefaultApplicationMessage();
+
         SwapData data = new SwapData();
         data.setMessage(messageText.getBytes(StandardCharsets.UTF_8));
-        data.setTopic("AppModel");
+        data.setTopic(topic);
+
         message.setContentObject(data);
+
         sendMessageToGateway(message);
-    }
-
-    private void returnAttendanceCheck(String group) {
-        LocalDate currentDate = LocalDate.now(this.zoneId);
-        LocalTime currentHour = LocalTime.now(this.zoneId).withSecond(0).withNano(0);
-
-        // String messageText = String.format("LOG %s %s %s %s", currentDate.toString(), currentHour.toString(), this.matricula, group);
-        String messageText = String.format("LOG %s %s %s ", currentDate.toString(), currentHour.toString(), group);
-
-        for (Integer id : this.studentIDs) {
-            messageText = messageText.concat(String.valueOf(id).concat(","));
-        }
-        System.out.println("Sending attendance check reply: " + messageText);
-        this.sendMessageToPN(messageText, "StudentAttendanceCheck");
-    }
-
-    private void registerClass(Scanner keyboard) {
-        System.out.print("Enter subject: ");
-        String subjectText = keyboard.nextLine();
-
-        System.out.print("Enter class: ");
-        String classText = keyboard.nextLine();
-
-        System.out.println("Enter class date (yyyy-mm-dd): ");
-        String dateText = keyboard.nextLine();
-
-        System.out.print("Enter threshold: ");
-        String thresholdText = keyboard.nextLine();
-
-        String command = "Register ";
-        command = command.concat(subjectText).concat(" ").concat(classText).concat(" ").concat(dateText).concat(" ").concat(thresholdText);
-
-        this.sendMessageToPN(command, "AppModel");
     }
 
     @Override
@@ -282,7 +200,7 @@ public class MobileNode extends CKMobileNode {
 
     /**
      * Send groupcast message
-     * 
+     *
      * @param keyboard
      */
     private void sendGroupcastMessage(Scanner keyboard) {
@@ -315,12 +233,11 @@ public class MobileNode extends CKMobileNode {
         LocalDate currentDate = LocalDate.now(this.zoneId);
         LocalTime currentHour = LocalTime.now(this.zoneId).withSecond(0).withNano(0);
 
-        System.out.println("matriculas = " + this.studentIDs.toString());
         contextObj.put("matricula", this.studentIDs.toString().replace("[", "").replace("]", ""));
         // contextObj.set("matricula", objMapper.valueToTree(this.studentIDs));
         contextObj.put("local", this.local);
         contextObj.put("date", currentDate.toString());
-        contextObj.put("hour", currentHour.toString()); 
+        contextObj.put("hour", currentHour.toString());
 
         try {
             SwapData ctxData = new SwapData();

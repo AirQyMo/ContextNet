@@ -1,10 +1,9 @@
-version: '3'
-
 services:
   processing-node:
     build:  ./processing-node
-    depends_on:
-      - group-definer
+    container_name: processing-node
+    # depends_on:
+    #   - group-definer
     environment:
       app.consumer.topics: "AppModel"
       app.consumer.auto.offset.reset: "latest"
@@ -16,11 +15,7 @@ services:
       app.producer.linger.ms: "1"
       app.producer.acks: "all"
     volumes:
-      - /workspaces/SmartClassroom/data/users.json:/users.json
-      - /workspaces/SmartClassroom/data/turmas.json:/turmas.json
-      - /workspaces/SmartClassroom/data/groups_log.csv:/groups_log.csv
-      - /workspaces/SmartClassroom/data/attendance_log.csv:/attendance_log.csv
-      - /workspaces/SmartClassroom/data/attendance_table.csv:/attendance_table.csv
+      - ./processing-node/data/sensors.json:/app/data/sensors.json
     deploy:
       resources:
         limits:
@@ -28,25 +23,24 @@ services:
         reservations:
           memory: 256M
 
-  group-definer:
-    build:  ./group-definer
-    environment:
-      gd.one.consumer.topics: "GroupReportTopic"
-      gd.one.consumer.auto.offset.reset: "latest"
-      gd.one.consumer.bootstrap.servers: "kafka1:6110"   # aqui
-      gd.one.consumer.group.id: "gw-gd"
-      gd.one.producer.bootstrap.servers: "kafka1:6110"   # aqui
-      gd.one.producer.retries: "3"
-      gd.one.producer.enable.idempotence: "true"
-      gd.one.producer.linger.ms: "1"
-    volumes:
-      - /workspaces/SmartClassroom/data/users.json:/users.json
-      - /workspaces/SmartClassroom/data/turmas.json:/turmas.json
-      - /workspaces/SmartClassroom/data/groups_log.csv:/groups_log.csv
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-        reservations:
-          memory: 256M
-        
+  # group-definer:
+  #   build:  ./group-definer
+  #   environment:
+  #     gd.one.consumer.topics: "GroupReportTopic"
+  #     gd.one.consumer.auto.offset.reset: "latest"
+  #     gd.one.consumer.bootstrap.servers: "kafka1:6110"   # aqui
+  #     gd.one.consumer.group.id: "gw-gd"
+  #     gd.one.producer.bootstrap.servers: "kafka1:6110"   # aqui
+  #     gd.one.producer.retries: "3"
+  #     gd.one.producer.enable.idempotence: "true"
+  #     gd.one.producer.linger.ms: "1"
+  #   volumes:
+  #     - /workspaces/SmartClassroom/data/users.json:/users.json
+  #     - /workspaces/SmartClassroom/data/turmas.json:/turmas.json
+  #     - /workspaces/SmartClassroom/data/groups_log.csv:/groups_log.csv
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         memory: 512M
+  #       reservations:
+  #         memory: 256M

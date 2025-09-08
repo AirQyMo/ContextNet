@@ -10,9 +10,11 @@
     <packaging>jar</packaging>  <!-- usar pom no lugar de jar para não gerar o arquivo 1.0-SNAPSHOT.jar -->
 
     <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <encoding>UTF-8</encoding>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.release>17</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 
     <repositories>
@@ -23,11 +25,6 @@
     </repositories>
 
     <dependencies>
-        <dependency>
-            <groupId>SmartClassroom</groupId>
-            <artifactId>auxiliares</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
@@ -52,16 +49,6 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <version>1.8.0-beta4</version>
-        </dependency>
-        <dependency>
-            <groupId>br.pucrio.inf.lac</groupId>
-            <artifactId>contextnet</artifactId>
-            <version>3.0</version>
-        </dependency>
-        <dependency>
-            <groupId>br.pucrio.inf.lac</groupId>
-            <artifactId>ExchangeData</artifactId>
-            <version>1.0</version>
         </dependency>
         <dependency>
             <groupId>br.pucrio.inf.lac</groupId>
