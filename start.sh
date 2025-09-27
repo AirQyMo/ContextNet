@@ -1,9 +1,5 @@
-# rebuild containers
-# docker compose -f docker-start-gw.yml build
-# docker compose -f contextnet-stationary.yml build
-
 # starts gw, kafka and zookeeper in the background
-docker compose -f docker-start-gw.yml up -d
+docker compose -f docker-start-gw.yml up -d --build
 
 # starts pn and gd, showing logs in stdout
-docker compose -f contextnet-stationary.yml up
+docker compose -f contextnet-stationary.yml up --build

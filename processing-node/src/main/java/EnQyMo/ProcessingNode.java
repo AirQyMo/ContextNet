@@ -1,4 +1,4 @@
-package main.java.SmartClassroom;
+package main.java.EnQyMo;
 
 import utils.java.Sensor.Sensor;
 

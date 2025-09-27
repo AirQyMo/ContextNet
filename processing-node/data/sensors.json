@@ -3,21 +3,28 @@
         "id": "s1",
         "properties": {
             "name": "Sensor 1",
-            "group": 1
+            "group": 1001
         }
     },
     {
         "id": "s2",
         "properties": {
             "name": "Sensor 2",
-            "group": 2
+            "group": 1001
         }
     },
     {
         "id": "s3",
         "properties": {
             "name": "Sensor 3",
-            "group": 3
+            "group": 1002
+        }
+    },
+    {
+        "id": "s4",
+        "properties": {
+            "name": "Sensor 4",
+            "group": 1003
         }
     }
 ]

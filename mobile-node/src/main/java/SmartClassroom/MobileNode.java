@@ -1,8 +1,6 @@
 package SmartClassroom;
 
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
@@ -11,6 +9,7 @@ import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -230,14 +229,9 @@ public class MobileNode extends CKMobileNode {
         ObjectMapper objMapper = new ObjectMapper();
         ObjectNode contextObj = objMapper.createObjectNode();
 
-        LocalDate currentDate = LocalDate.now(this.zoneId);
-        LocalTime currentHour = LocalTime.now(this.zoneId).withSecond(0).withNano(0);
+        String[] beacons = new String[] { "Beacon 3", "Beacon 4" };
 
-        contextObj.put("matricula", this.studentIDs.toString().replace("[", "").replace("]", ""));
-        // contextObj.set("matricula", objMapper.valueToTree(this.studentIDs));
-        contextObj.put("local", this.local);
-        contextObj.put("date", currentDate.toString());
-        contextObj.put("hour", currentHour.toString());
+        contextObj.put("beacons", Arrays.toString(beacons));
 
         try {
             SwapData ctxData = new SwapData();
