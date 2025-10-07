@@ -92,11 +92,10 @@ public class ProcessingNode extends ModelApplication{
 
     /**
      * Process sensor alert from JSON
-     * @param jsonString : JSON string containing the alert analysis without "analisys" wrapper
+     * @param analysis : AlertAnalysis object parsed from JSON
      */
     private void processAnalysis(AlertAnalysis analysis) {
         try {
-            // Parse JSON directly as AlertAnalysis (no wrapper)
 
             System.out.println("=== Alert Analysis ===");
             System.out.println("Alert ID: " + analysis.getAlertId());
@@ -114,7 +113,6 @@ public class ProcessingNode extends ModelApplication{
                 }
             }
 
-            // Here you can add logic to process the alert (store, forward, etc.)
 
         } catch (Exception e) {
             System.err.println("Error processing sensor alert: " + e.getMessage());
@@ -141,7 +139,6 @@ public class ProcessingNode extends ModelApplication{
                 Alert alert = objectMapper.readValue(text, Alert.class);
                 processAnalysis(alert.getAnalisys());
             } else {
-                // Process as regular sensor command
                 System.out.println("Regular sensor command detected. Executing command...");
                 executeCommand("sensor " + text);
             }
@@ -201,10 +198,8 @@ class Alert {
     @JsonProperty("analisys")
     private AlertAnalysis analisys;
 
-    // Constructors
     public Alert() {}
 
-    // Getters and Setters
     public AlertAnalysis getAnalisys() {
         return analisys;
     }
@@ -234,10 +229,8 @@ class AlertAnalysis {
     @JsonProperty("sensores")
     private List<SensorAlert> sensores;
 
-    // Constructors
     public AlertAnalysis() {}
 
-    // Getters and Setters
     public String getAlertId() {
         return alertId;
     }
@@ -282,10 +275,8 @@ class SensorAlert {
     @JsonProperty("poluentes")
     private List<Pollutant> pollutants;
 
-    // Constructors
     public SensorAlert() {}
 
-    // Getters and Setters
     public String getSensorId() {
         return sensorId;
     }
@@ -324,10 +315,8 @@ class Pollutant {
     @JsonProperty("affected_diseases")
     private AffectedDiseases affectedDiseases;
 
-    // Constructors
     public Pollutant() {}
 
-    // Getters and Setters
     public String getName() {
         return name;
     }
@@ -369,10 +358,8 @@ class AffectedDiseases {
     @JsonProperty("disease")
     private List<String> disease;
 
-    // Constructors
     public AffectedDiseases() {}
 
-    // Getters and Setters
     public List<String> getDisease() {
         return disease;
     }
