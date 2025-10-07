@@ -12,17 +12,25 @@ Projeto que usa ContextNet para um sistema de monitoramento do ar.
 ### 1. Subir a infraestrutura (Gateway, Kafka e Zookeeper)
 
 ```bash
-docker compose -f docker-start-gw.yml up -d
+docker compose -f start-gw.yml up -d
 ```
 
-### 2. Compilar e subir o Processing Node
+### 2. Compilar o Processing Node, Mobile Node e Group Definer
 
 ```bash
 source compile-all.sh
 ```
 
+### 3. Subir os containers do Processing Node e Group Definer
+
 ```bash
 docker compose -f contextnet-stationary.yml up
+```
+
+### 4. Executar o Mobile Node
+
+```bash
+cd mobile-node/ && java -jar target/mobile-node.jar
 ```
 
 ## 🔧 Portas utilizadas

@@ -30,15 +30,12 @@ public class MobileNode extends CKMobileNode {
     // Valid user input options
     private static final String OPTION_GROUPCAST = "G";
     private static final String OPTION_PN = "P";
+    private static final String OPTION_ALERT = "A";
     private static final String OPTION_EXIT = "Z";
-
-    private ZoneId zoneId = ZoneId.of("America/Sao_Paulo");
 
     // The variable cannot be local because it is being used in a lambda function
     // Control the infinite loop until it ends
     private boolean fim = false;
-    private ArrayList<Integer> studentIDs = new ArrayList<>();
-    private String local = "INVALIDO";
 
     /**
      * main
@@ -69,6 +66,7 @@ public class MobileNode extends CKMobileNode {
         // Maps options to corresponding functions
         // optionsMap.put(OPTION_UNICAST, this::sendUnicastMessage);
         optionsMap.put(OPTION_PN, this::enterMessageToPN);
+        optionsMap.put(OPTION_ALERT, this::sendAlertToPN);
         optionsMap.put(OPTION_GROUPCAST, this::sendGroupcastMessage);
         optionsMap.put(OPTION_EXIT, scanner -> fim = true);
 
@@ -76,7 +74,7 @@ public class MobileNode extends CKMobileNode {
         while (!fim) {
 
             // Requests the user's option
-            System.out.print("(G) Groupcast message | (P) Send message to Processing Node | (Z) to finish)? ");
+            System.out.print("(G) Groupcast | (P) Message to PN | (A) Send Alert to PN | (Z) to finish)? ");
             String linha = keyboard.nextLine().trim().toUpperCase();
             System.out.printf("Your option was %s. ", linha);
 
@@ -161,6 +159,50 @@ public class MobileNode extends CKMobileNode {
         String messageText = keyboard.nextLine();
 
         this.sendMessageToPN(messageText, "AppModel");
+    }
+
+    /**
+     * Sends alert analysis JSON to the Processing Node
+     */
+    private void sendAlertToPN(Scanner keyboard) {
+        String alertJson = "{\n" +
+            "  \"analisys\": {\n" +
+            "    \"alert_id\": \"alert_1706798417002\",\n" +
+            "    \"timestamp\": \"2025-10-01T22:40:17.002-03:00\",\n" +
+            "    \"sensores\": [\n" +
+            "      {\n" +
+            "        \"sensor_id\": \"IAQ_6227821\",\n" +
+            "        \"poluentes\": [\n" +
+            "          {\n" +
+            "            \"poluente\": \"pm25\",\n" +
+            "            \"risk_level\": \"moderate\",\n" +
+            "            \"affected_diseases\": {\n" +
+            "              \"disease\": [\n" +
+            "                \"asma\",\n" +
+            "                \"bronquite\",\n" +
+            "                \"irritação respiratória\"\n" +
+            "              ]\n" +
+            "            }\n" +
+            "          },\n" +
+            "          {\n" +
+            "            \"poluente\": \"pm4\",\n" +
+            "            \"risk_level\": \"high\",\n" +
+            "            \"affected_diseases\": {\n" +
+            "              \"disease\": [\n" +
+            "                \"irritação respiratória\",\n" +
+            "                \"inflamação sistêmica leve\"\n" +
+            "              ]\n" +
+            "            }\n" +
+            "          }\n" +
+            "        ]\n" +
+            "      }\n" +
+            "    ]\n" +
+            "  }\n" +
+            "}";
+
+        System.out.println("Sending alert analysis to Processing Node...");
+        this.sendMessageToPN(alertJson, "AppModel");
+        System.out.println("Alert sent successfully!");
     }
 
     /**
