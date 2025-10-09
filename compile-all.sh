@@ -1,3 +1,6 @@
+echo "#-----------------# Compiling utils #-----------------#"
+bash scripts/compile-utils.sh
+
 echo "#-----------------# Compiling group-definer #-----------------#"
 bash scripts/compile-gd.sh
 

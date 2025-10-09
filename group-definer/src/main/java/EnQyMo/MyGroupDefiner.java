@@ -38,9 +38,9 @@ public class MyGroupDefiner implements GroupSelection {
      */
     public Set<Integer> groupsIdentification() {
         /**
-         * 1001 -> Sensor 1, Sensor 2
-         * 1002 -> Sensor 3
-         * 1003 -> Sensor 4
+         * 1001 -> Beacon 1, Beacon 2
+         * 1002 -> Beacon 3
+         * 1003 -> Beacon 4
          */
         Set<Integer> setOfGroups = new HashSet<Integer>();
 

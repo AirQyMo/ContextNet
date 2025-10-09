@@ -1,27 +1,28 @@
 package utils.java.Sensor;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class Sensor {
+    @JsonProperty("sensor_id")
     public String id;
-    public SensorProperties properties;
 
-    // Construtor padrão para Jackson
-    public Sensor() {}
-
-    public Sensor(String id, String name, int group) {
-        this.id = id;
-        this.properties = new SensorProperties(name, group);
-    }
-}
-
-class SensorProperties {
+    @JsonProperty("sensor_name")
     public String name;
+
+    @JsonProperty("sensor_group")
     public int group;
 
-    // Construtor padrão para Jackson
-    public SensorProperties() {}
+    public Sensor() {}
 
-    public SensorProperties(String name, int group) {
-        this.name = name;
-        this.group = group;
+    public String getId() {
+        return this.id;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public int getGroup() {
+        return this.group;
     }
 }

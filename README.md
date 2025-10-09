@@ -24,7 +24,7 @@ source compile-all.sh
 ### 3. Subir os containers do Processing Node e Group Definer
 
 ```bash
-docker compose -f contextnet-stationary.yml up
+docker compose -f contextnet-stationary.yml up --build
 ```
 
 ### 4. Executar o Mobile Node

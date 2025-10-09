@@ -1,30 +1,22 @@
 [
     {
-        "id": "s1",
-        "properties": {
-            "name": "Sensor 1",
-            "group": 1001
-        }
+        "sensor_id": "IAQ_6227821",
+        "sensor_name": "Indoor Air Quality Sensor",
+        "sensor_group": 1001
     },
     {
-        "id": "s2",
-        "properties": {
-            "name": "Sensor 2",
-            "group": 1001
-        }
+        "sensor_id": "s2",
+        "sensor_name": "Sensor 2",
+        "sensor_group": 1001
     },
     {
-        "id": "s3",
-        "properties": {
-            "name": "Sensor 3",
-            "group": 1002
-        }
+        "sensor_id": "s3",
+        "sensor_name": "Sensor 3",
+        "sensor_group": 1002
     },
     {
-        "id": "s4",
-        "properties": {
-            "name": "Sensor 4",
-            "group": 1003
-        }
+        "sensor_id": "s4",
+        "sensor_name": "Sensor 4",
+        "sensor_group": 1003
     }
 ]

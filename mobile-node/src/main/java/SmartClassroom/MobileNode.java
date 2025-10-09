@@ -271,7 +271,7 @@ public class MobileNode extends CKMobileNode {
         ObjectMapper objMapper = new ObjectMapper();
         ObjectNode contextObj = objMapper.createObjectNode();
 
-        String[] beacons = new String[] { "Beacon 3", "Beacon 4" };
+        String[] beacons = new String[] { "Beacon 2", "Beacon 3" };
 
         contextObj.put("beacons", Arrays.toString(beacons));
 

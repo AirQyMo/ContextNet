@@ -1,12 +1,13 @@
 package main.java.EnQyMo;
 
+import utils.JsonParseException;
+import utils.JsonParser;
+
 import utils.java.Sensor.Sensor;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 import java.util.List;
-
-import java.io.File;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
@@ -18,8 +19,9 @@ import ckafka.data.SwapData;
 import main.java.application.ModelApplication;
 
 public class ProcessingNode extends ModelApplication{
-    private Swap swap;
+    private JsonParser jsonParser;
     private ObjectMapper objectMapper;
+    private Swap swap;
     private Sensor[] sensors;
     //private static final Logger logger = LoggerFactory.getLogger(ProcessingNode.class);
 
@@ -32,6 +34,7 @@ public class ProcessingNode extends ModelApplication{
      */
     public ProcessingNode() {
         this.objectMapper = new ObjectMapper();
+        this.jsonParser = new JsonParser();
         this.swap = new Swap(objectMapper);
     }
 
@@ -48,23 +51,22 @@ public class ProcessingNode extends ModelApplication{
     public void runPN(Scanner keyboard) {
         System.out.println("Processing Node started. Type 'CTRL + C' to stop.");
 
-        ObjectMapper mapper = new ObjectMapper();
-
-        // Getting JSON object with sensor data
         try {
-            this.sensors = mapper.readValue(new File("data/sensors.json"), Sensor[].class);
-        } catch (com.fasterxml.jackson.core.JsonParseException | com.fasterxml.jackson.databind.JsonMappingException e) {
-            System.err.println("Error parsing sensors.json: " + e.getMessage());
-            e.printStackTrace();
-        } catch (java.io.IOException e) {
-            System.err.println("IO error reading sensors.json: " + e.getMessage());
-            e.printStackTrace();
-        } catch (Exception e) {
-            System.err.println("Unexpected error: " + e.getMessage());
+            this.sensors = jsonParser.parse("data/sensors.json", Sensor[].class);
+            System.out.println("Loaded " + (sensors != null ? sensors.length : 0) + " sensors.");
+
+            System.out.println("Sensors:");
+            if (sensors != null) {
+                for (Sensor sensor : sensors) {
+                    System.out.println(" - ID: " + sensor.getId() + ", Name: " + sensor.getName() + ", Group: " + sensor.getGroup());
+                }
+            }
+        } catch (JsonParseException e) {
+            System.err.println("Error loading sensors: " + e.getMessage());
             e.printStackTrace();
         }
 
-        System.out.println("Loaded " + (sensors != null ? sensors.length : 0) + " sensors.");
+
 
         while(!fim) {
             // System.out.println("### n = " + n++ + " ###");
@@ -76,21 +78,6 @@ public class ProcessingNode extends ModelApplication{
     }
 
     /**
-     * Execute a command
-     * @param fullCommand : Full command to execute
-     */
-    private void executeCommand(String fullCommand) {
-        String[] parts = fullCommand.split(" ", 2);
-        if (parts.length > 1 && parts[0].equals("sensor")) {
-            System.out.println("Sensor command received:\n" + parts[1]);
-            // Process regular sensor commands here
-        } else {
-            System.out.println("Invalid command");
-        }
-    }
-
-
-    /**
      * Process sensor alert from JSON
      * @param analysis : AlertAnalysis object parsed from JSON
      */
@@ -100,20 +87,37 @@ public class ProcessingNode extends ModelApplication{
             System.out.println("=== Alert Analysis ===");
             System.out.println("Alert ID: " + analysis.getAlertId());
             System.out.println("Timestamp: " + analysis.getTimestamp());
-            System.out.println("Number of sensors: " + analysis.getSensores().size());
+            System.out.println("Number of sensors: " + analysis.getSensors().size());
 
-            for (SensorAlert sensorAlert : analysis.getSensores()) {
+            for (SensorAlert sensorAlert : analysis.getSensors()) {
                 System.out.println("\n--- Sensor: " + sensorAlert.getSensorId() + " ---");
 
-                for (Pollutant pollutant : sensorAlert.getPollutants()) {
-                    System.out.println("  Pollutant: " + pollutant.getName());
-                    System.out.println("  Risk Level: " + pollutant.getRiskLevel());
-                    System.out.println("  Affected Diseases: " +
-                        String.join(", ", pollutant.getAffectedDiseases().getDisease()));
+                if (sensorAlert.getPollutants() == null || sensorAlert.getPollutants().isEmpty()) {
+                    System.out.println("No pollutants data available for this sensor.");
+                    continue;
+                } else {
+                    String sensorAlertId = sensorAlert.getSensorId();
+
+                    int group = -1;
+                    boolean found = false;
+                    if (sensors != null) {
+                        for (Sensor sensor : sensors) {
+                            if (sensor.getId().equals(sensorAlertId)) {
+                                group = sensor.getGroup();
+                                found = true;
+                                break;
+                            }
+                        }
+
+                        if (found) {
+                            System.out.println("Sensor ID " + sensorAlertId + " found in configuration.");
+                            this.sendGroupcastMessage(sensorAlert.getPollutants().toString(), group, "GroupMessageTopic");
+                        } else {
+                            System.out.println("Warning: Sensor ID " + sensorAlertId + " NOT found in configuration.");
+                        }
+                    }
                 }
             }
-
-
         } catch (Exception e) {
             System.err.println("Error processing sensor alert: " + e.getMessage());
             e.printStackTrace();
@@ -126,34 +130,42 @@ public class ProcessingNode extends ModelApplication{
      */
     @Override
     public void recordReceived(ConsumerRecord record) {
-        System.out.println(String.format("Command received from %s", record.key()));
-
+        System.out.println(String.format("#--------------# Receiving message from %s #--------------#", record.key()));
+        String message = "";
         try {
-            // First, try to parse as raw JSON to check the message type
-            String rawMessage = new String((byte[]) record.value(), StandardCharsets.UTF_8);
-            System.out.println("Raw message received: " + rawMessage);
+            // First, try to parse as Swapped Data from Context Net
+            SwapData data = swap.SwapDataDeserialization((byte[]) record.value());
+            message = new String(data.getMessage(), StandardCharsets.UTF_8);
+            System.out.println("(Swapped Data) Message received: " + message);
 
-            // Check if JSON contains "analisys" field
-            if (rawMessage.trim().contains("\"analisys\"")) {
-                System.out.println("Analysis command detected. Processing alert...");
-                Alert alert = objectMapper.readValue(rawMessage, Alert.class);
-                processAnalysis(alert.getAnalisys());
-            } else {
-                // Try to deserialize as SwapData for regular messages
-                try {
-                    SwapData data = swap.SwapDataDeserialization((byte[]) record.value());
-                    String text = new String(data.getMessage(), StandardCharsets.UTF_8);
-                    System.out.println("Message received: " + text);
-                    System.out.println("Regular sensor command detected. Executing command...");
-                    executeCommand("sensor " + text);
-                } catch (Exception e) {
-                    System.out.println("Could not parse as SwapData, treating as plain text...");
-                    executeCommand("sensor " + rawMessage);
-                }
-            }
         } catch (Exception e) {
-            System.err.println("Error processing record: " + e.getMessage());
+            System.err.println("Error deserializing SwapData: " + e.getMessage());
             e.printStackTrace();
+
+            try {
+                // Then, try to parse as raw JSON to check the message type
+                message = new String((byte[]) record.value(), StandardCharsets.UTF_8);
+                System.out.println("(JSON) Message received: " + message);
+            } catch (Exception er) {
+                System.err.println("Error processing record: " + er.getMessage());
+                er.printStackTrace();
+            }
+        }
+        // Check if JSON contains "analisys" field
+        if (message.trim().contains("\"analisys\"")) {
+            System.out.println("Analysis command detected. Processing alert...");
+            try {
+                Alert alert = objectMapper.readValue(message, Alert.class);
+                processAnalysis(alert.getAnalisys());
+            } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+                System.err.println("Error parsing JSON message: " + e.getMessage());
+                e.printStackTrace();
+            } catch (Exception e) {
+                System.err.println("Unexpected error processing JSON message: " + e.getMessage());
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("Unknown message format. Ignoring.");
         }
     }
 
@@ -211,17 +223,13 @@ class Alert {
     public Alert() {}
 
     public AlertAnalysis getAnalisys() {
-        return analisys;
-    }
-
-    public void setAnalisys(AlertAnalysis analisys) {
-        this.analisys = analisys;
+        return this.analisys;
     }
 
     @Override
     public String toString() {
         return "Alert{" +
-                "analisys=" + analisys +
+                "analisys=" + this.analisys +
                 '}';
     }
 }
@@ -237,40 +245,28 @@ class AlertAnalysis {
     private String timestamp;
 
     @JsonProperty("sensores")
-    private List<SensorAlert> sensores;
+    private List<SensorAlert> sensors;
 
     public AlertAnalysis() {}
 
     public String getAlertId() {
-        return alertId;
-    }
-
-    public void setAlertId(String alertId) {
-        this.alertId = alertId;
+        return this.alertId;
     }
 
     public String getTimestamp() {
-        return timestamp;
+        return this.timestamp;
     }
 
-    public void setTimestamp(String timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public List<SensorAlert> getSensores() {
-        return sensores;
-    }
-
-    public void setSensores(List<SensorAlert> sensores) {
-        this.sensores = sensores;
+    public List<SensorAlert> getSensors() {
+        return this.sensors;
     }
 
     @Override
     public String toString() {
         return "AlertAnalysis{" +
-                "alertId='" + alertId + '\'' +
-                ", timestamp='" + timestamp + '\'' +
-                ", sensores=" + sensores +
+                "alertId='" + this.alertId + '\'' +
+                ", timestamp='" + this.timestamp + '\'' +
+                ", sensors=" + this.sensors +
                 '}';
     }
 }
@@ -288,26 +284,18 @@ class SensorAlert {
     public SensorAlert() {}
 
     public String getSensorId() {
-        return sensorId;
-    }
-
-    public void setSensorId(String sensorId) {
-        this.sensorId = sensorId;
+        return this.sensorId;
     }
 
     public List<Pollutant> getPollutants() {
-        return pollutants;
-    }
-
-    public void setPollutants(List<Pollutant> pollutants) {
-        this.pollutants = pollutants;
+        return this.pollutants;
     }
 
     @Override
     public String toString() {
         return "SensorAlert{" +
-                "sensorId='" + sensorId + '\'' +
-                ", pollutants=" + pollutants +
+                "sensorId='" + this.sensorId + '\'' +
+                ", pollutants=" + this.pollutants +
                 '}';
     }
 }
@@ -328,35 +316,23 @@ class Pollutant {
     public Pollutant() {}
 
     public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+        return this.name;
     }
 
     public String getRiskLevel() {
-        return riskLevel;
-    }
-
-    public void setRiskLevel(String riskLevel) {
-        this.riskLevel = riskLevel;
+        return this.riskLevel;
     }
 
     public AffectedDiseases getAffectedDiseases() {
-        return affectedDiseases;
-    }
-
-    public void setAffectedDiseases(AffectedDiseases affectedDiseases) {
-        this.affectedDiseases = affectedDiseases;
+        return this.affectedDiseases;
     }
 
     @Override
     public String toString() {
         return "Pollutant{" +
-                "name='" + name + '\'' +
-                ", riskLevel='" + riskLevel + '\'' +
-                ", affectedDiseases=" + affectedDiseases +
+                "name='" + this.name + '\'' +
+                ", riskLevel='" + this.riskLevel + '\'' +
+                ", affectedDiseases=" + this.affectedDiseases +
                 '}';
     }
 }
@@ -371,17 +347,13 @@ class AffectedDiseases {
     public AffectedDiseases() {}
 
     public List<String> getDisease() {
-        return disease;
-    }
-
-    public void setDisease(List<String> disease) {
-        this.disease = disease;
+        return this.disease;
     }
 
     @Override
     public String toString() {
         return "AffectedDiseases{" +
-                "disease=" + disease +
+                "disease=" + this.disease +
                 '}';
     }
 }
