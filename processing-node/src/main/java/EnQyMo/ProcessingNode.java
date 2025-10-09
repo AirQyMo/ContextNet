@@ -129,20 +129,30 @@ public class ProcessingNode extends ModelApplication{
         System.out.println(String.format("Command received from %s", record.key()));
 
         try {
-            SwapData data = swap.SwapDataDeserialization((byte[]) record.value());
-            String text = new String(data.getMessage(), StandardCharsets.UTF_8);
-            System.out.println("Message received: " + text);
+            // First, try to parse as raw JSON to check the message type
+            String rawMessage = new String((byte[]) record.value(), StandardCharsets.UTF_8);
+            System.out.println("Raw message received: " + rawMessage);
 
             // Check if JSON contains "analisys" field
-            if (text.trim().contains("\"analisys\"")) {
+            if (rawMessage.trim().contains("\"analisys\"")) {
                 System.out.println("Analysis command detected. Processing alert...");
-                Alert alert = objectMapper.readValue(text, Alert.class);
+                Alert alert = objectMapper.readValue(rawMessage, Alert.class);
                 processAnalysis(alert.getAnalisys());
             } else {
-                System.out.println("Regular sensor command detected. Executing command...");
-                executeCommand("sensor " + text);
+                // Try to deserialize as SwapData for regular messages
+                try {
+                    SwapData data = swap.SwapDataDeserialization((byte[]) record.value());
+                    String text = new String(data.getMessage(), StandardCharsets.UTF_8);
+                    System.out.println("Message received: " + text);
+                    System.out.println("Regular sensor command detected. Executing command...");
+                    executeCommand("sensor " + text);
+                } catch (Exception e) {
+                    System.out.println("Could not parse as SwapData, treating as plain text...");
+                    executeCommand("sensor " + rawMessage);
+                }
             }
         } catch (Exception e) {
+            System.err.println("Error processing record: " + e.getMessage());
             e.printStackTrace();
         }
     }
