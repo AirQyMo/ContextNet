@@ -132,40 +132,57 @@ public class ProcessingNode extends ModelApplication{
     public void recordReceived(ConsumerRecord record) {
         System.out.println(String.format("#--------------# Receiving message from %s #--------------#", record.key()));
         String message = "";
+        boolean isSwapData = false;
+        
         try {
-            // First, try to parse as Swapped Data from Context Net
-            SwapData data = swap.SwapDataDeserialization((byte[]) record.value());
-            message = new String(data.getMessage(), StandardCharsets.UTF_8);
-            System.out.println("(Swapped Data) Message received: " + message);
-
+            // First, convert to string to detect message type
+            message = new String((byte[]) record.value(), StandardCharsets.UTF_8);
+            
+            // Check if it's a direct JSON message (contains "analisys" field)
+            if (message.trim().contains("\"analisys\"")) {
+                System.out.println("(Direct JSON) Analysis message detected.");
+                System.out.println("Message received: " + message);
+                
+                // Process as alert analysis
+                System.out.println("Processing alert...");
+                try {
+                    Alert alert = objectMapper.readValue(message, Alert.class);
+                    processAnalysis(alert.getAnalisys());
+                } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+                    System.err.println("Error parsing JSON message: " + e.getMessage());
+                    e.printStackTrace();
+                } catch (Exception e) {
+                    System.err.println("Unexpected error processing JSON message: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            } else {
+                // Try to parse as SwapData from ContextNet
+                try {
+                    SwapData data = swap.SwapDataDeserialization((byte[]) record.value());
+                    message = new String(data.getMessage(), StandardCharsets.UTF_8);
+                    System.out.println("(Swapped Data) Message received: " + message);
+                    isSwapData = true;
+                    
+                    // Check if the inner message contains "analisys"
+                    if (message.trim().contains("\"analisys\"")) {
+                        System.out.println("Analysis command detected in swapped data. Processing alert...");
+                        try {
+                            Alert alert = objectMapper.readValue(message, Alert.class);
+                            processAnalysis(alert.getAnalisys());
+                        } catch (Exception e) {
+                            System.err.println("Error processing analysis from swapped data: " + e.getMessage());
+                            e.printStackTrace();
+                        }
+                    }
+                } catch (Exception e) {
+                    System.out.println("Not a SwapData message. Message content: " + message);
+                    System.out.println("Unknown message format. Ignoring.");
+                }
+            }
+            
         } catch (Exception e) {
-            System.err.println("Error deserializing SwapData: " + e.getMessage());
+            System.err.println("Error processing record: " + e.getMessage());
             e.printStackTrace();
-
-            try {
-                // Then, try to parse as raw JSON to check the message type
-                message = new String((byte[]) record.value(), StandardCharsets.UTF_8);
-                System.out.println("(JSON) Message received: " + message);
-            } catch (Exception er) {
-                System.err.println("Error processing record: " + er.getMessage());
-                er.printStackTrace();
-            }
-        }
-        // Check if JSON contains "analisys" field
-        if (message.trim().contains("\"analisys\"")) {
-            System.out.println("Analysis command detected. Processing alert...");
-            try {
-                Alert alert = objectMapper.readValue(message, Alert.class);
-                processAnalysis(alert.getAnalisys());
-            } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
-                System.err.println("Error parsing JSON message: " + e.getMessage());
-                e.printStackTrace();
-            } catch (Exception e) {
-                System.err.println("Unexpected error processing JSON message: " + e.getMessage());
-                e.printStackTrace();
-            }
-        } else {
-            System.out.println("Unknown message format. Ignoring.");
         }
     }
 
