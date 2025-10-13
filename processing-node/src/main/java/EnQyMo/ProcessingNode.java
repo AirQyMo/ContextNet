@@ -132,17 +132,16 @@ public class ProcessingNode extends ModelApplication{
     public void recordReceived(ConsumerRecord record) {
         System.out.println(String.format("#--------------# Receiving message from %s #--------------#", record.key()));
         String message = "";
-        boolean isSwapData = false;
-        
+
         try {
             // First, convert to string to detect message type
             message = new String((byte[]) record.value(), StandardCharsets.UTF_8);
-            
+
             // Check if it's a direct JSON message (contains "analisys" field)
             if (message.trim().contains("\"analisys\"")) {
                 System.out.println("(Direct JSON) Analysis message detected.");
                 System.out.println("Message received: " + message);
-                
+
                 // Process as alert analysis
                 System.out.println("Processing alert...");
                 try {
@@ -161,8 +160,7 @@ public class ProcessingNode extends ModelApplication{
                     SwapData data = swap.SwapDataDeserialization((byte[]) record.value());
                     message = new String(data.getMessage(), StandardCharsets.UTF_8);
                     System.out.println("(Swapped Data) Message received: " + message);
-                    isSwapData = true;
-                    
+
                     // Check if the inner message contains "analisys"
                     if (message.trim().contains("\"analisys\"")) {
                         System.out.println("Analysis command detected in swapped data. Processing alert...");
@@ -179,27 +177,9 @@ public class ProcessingNode extends ModelApplication{
                     System.out.println("Unknown message format. Ignoring.");
                 }
             }
-            
+
         } catch (Exception e) {
             System.err.println("Error processing record: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     *
-     * @param keyboard
-     */
-    private void sendUnicastMessage(Scanner keyboard) {
-        System.out.println("UUID:\nHHHHHHHH-HHHH-HHHH-HHHH-HHHHHHHHHHHH");
-        String uuid = keyboard.nextLine();
-        System.out.print("Message: ");
-        String messageText = keyboard.nextLine();
-        System.out.println(String.format("Sending |%s| to %s.", messageText, uuid));
-
-        try {
-            sendRecord(createRecord("PrivateMessageTopic", uuid, swap.SwapDataSerialization(createSwapData(messageText))));
-        } catch (Exception e) {
             e.printStackTrace();
         }
     }
