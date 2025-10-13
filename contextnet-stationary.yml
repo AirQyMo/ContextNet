@@ -22,6 +22,8 @@ services:
           memory: 512M
         reservations:
           memory: 256M
+    networks:
+      - contextnet
 
   group-definer:
     build:  ./group-definer
@@ -40,3 +42,10 @@ services:
           memory: 512M
         reservations:
           memory: 256M
+    networks:
+      - contextnet
+
+networks:
+  contextnet:
+    external: true
+    name: contextnet-net
