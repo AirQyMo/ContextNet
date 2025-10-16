@@ -27,6 +27,7 @@ services:
 
   group-definer:
     build:  ./group-definer
+    container_name: group-definer
     environment:
       gd.one.consumer.topics: "GroupReportTopic"
       gd.one.consumer.auto.offset.reset: "latest"
@@ -36,6 +37,8 @@ services:
       gd.one.producer.retries: "3"
       gd.one.producer.enable.idempotence: "true"
       gd.one.producer.linger.ms: "1"
+    volumes:
+      - ./group-definer/data/beacons.json:/app/data/beacons.json
     deploy:
       resources:
         limits:

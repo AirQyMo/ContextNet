@@ -14,10 +14,17 @@ import ckafka.data.Swap;
 import main.java.ckafka.GroupDefiner;
 import main.java.ckafka.GroupSelection;
 
+import utils.JsonParser;
+import utils.JsonParseException;
+
+import utils.java.Beacon.Beacon;
+
 
 public class MyGroupDefiner implements GroupSelection {
     /** Logger */
     final Logger logger = LoggerFactory.getLogger(MyGroupDefiner.class);
+    private JsonParser jsonParser;
+    private Beacon[] beacons;
 
     public static void main(String[] args) {
         MyGroupDefiner MyGD = new MyGroupDefiner();
@@ -29,6 +36,23 @@ public class MyGroupDefiner implements GroupSelection {
     public MyGroupDefiner() {
         ObjectMapper objectMapper = new ObjectMapper();
         Swap swap = new Swap(objectMapper);
+        this.jsonParser = new JsonParser();
+
+        // Load beacons from JSON file
+        try {
+            this.beacons = jsonParser.parse("data/beacons.json", Beacon[].class);
+            System.out.println("Loaded " + (beacons != null ? beacons.length : 0) + " beacons.");
+
+            if (beacons != null) {
+                for (Beacon beacon : beacons) {
+                    System.out.println(" - UUID: " + beacon.getUuid() + ", Group: " + beacon.getGroup());
+                }
+            }
+        } catch (JsonParseException e) {
+            System.err.println("Error loading beacons: " + e.getMessage());
+            e.printStackTrace();
+        }
+
         new GroupDefiner(this, swap);
     }
 
@@ -37,39 +61,38 @@ public class MyGroupDefiner implements GroupSelection {
      * @return set with all the groups that this GroupDefiner manages
      */
     public Set<Integer> groupsIdentification() {
-        /**
-         * 1001 -> Beacon 1, Beacon 2
-         * 1002 -> Beacon 3
-         * 1003 -> Beacon 4
-         */
         Set<Integer> setOfGroups = new HashSet<Integer>();
 
-        setOfGroups.add(1001);
-        setOfGroups.add(1002);
-        setOfGroups.add(1003);
+        // Load groups from beacons JSON
+        if (this.beacons != null) {
+            for (Beacon beacon : this.beacons) {
+                setOfGroups.add(beacon.getGroup());
+            }
+        }
 
         return setOfGroups;
     }
 
     /**
-     * Function to get user group ID from location
-     * @param location
-     * @return group ID
+     * Function to get user group ID from beacons
+     * @param beaconIds array of beacon identifiers
+     * @return group ID or -1 if not found
      */
-    private int getGroupIDFromBeacons(String[] beacons)
+    private int getGroupIDFromBeacons(String[] beaconIds)
     {
-        for (String beacon : beacons) {
-            // System.out.println("Beacon: " + beacon);
-            beacon = beacon.replace("\"", "");
-            switch (beacon) {
-                case "Beacon 1":
-                    return 1001;
-                case "Beacon 2":
-                    return 1001;
-                case "Beacon 3":
-                    return 1002;
-                case "Beacon 4":
-                    return 1003;
+        if (this.beacons == null) {
+            return -1;
+        }
+
+        for (String beaconId : beaconIds) {
+            // Clean the beacon ID
+            beaconId = beaconId.replace("\"", "").trim();
+
+            // Search for the beacon in the loaded beacons array
+            for (Beacon beacon : this.beacons) {
+                if (beacon.getUuid().equals(beaconId)) {
+                    return beacon.getGroup();
+                }
             }
         }
 
