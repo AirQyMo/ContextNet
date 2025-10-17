@@ -1,0 +1,180 @@
+.alert-card {
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.alert-content {
+  margin-bottom: 20px;
+}
+
+.alert-content:last-child {
+  margin-bottom: 0;
+}
+
+.pollutant-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.pollutant-section:first-of-type {
+  margin-top: 16px;
+  padding-top: 0;
+  border-top: none;
+}
+
+.alert-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.sensor-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sensor-icon {
+  font-size: 1.5rem;
+}
+
+.sensor-id {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 0.95rem;
+}
+
+.alert-time {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+.risk-badge {
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.risk-badge.low {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.risk-badge.moderate {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.risk-badge.high {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.pollutant-info {
+  margin-bottom: 10px;
+}
+
+.pollutant-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  background: #f3f4f6;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #374151;
+  flex-wrap: wrap;
+}
+
+.pollutant-icon {
+  font-size: 1.2rem;
+}
+
+.pollutant-risk-badge {
+  margin-left: auto;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pollutant-risk-badge.low {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.pollutant-risk-badge.moderate {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.pollutant-risk-badge.high {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.diseases-section {
+  background: #fef2f2;
+  padding: 12px;
+  border-radius: 8px;
+  border-left: 3px solid #ef4444;
+}
+
+.diseases-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+  color: #991b1b;
+}
+
+.diseases-icon {
+  font-size: 1rem;
+}
+
+.diseases-list {
+  list-style: none;
+  padding-left: 24px;
+  margin: 0;
+}
+
+.diseases-list li {
+  font-size: 0.85rem;
+  color: #7f1d1d;
+  padding: 4px 0;
+  position: relative;
+}
+
+.diseases-list li::before {
+  content: '•';
+  position: absolute;
+  left: -12px;
+  color: #ef4444;
+  font-weight: bold;
+}
+

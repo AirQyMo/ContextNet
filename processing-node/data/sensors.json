@@ -2,7 +2,7 @@
     {
         "sensor_id": "IAQ_6227821",
         "sensor_name": "Indoor Air Quality Sensor",
-        "sensor_group": 1001
+        "sensor_group": 1002
     },
     {
         "sensor_id": "s2",
@@ -10,7 +10,7 @@
         "sensor_group": 1001
     },
     {
-        "sensor_id": "s3",
+        "sensor_id": "IAQ_6227824",
         "sensor_name": "Sensor 3",
         "sensor_group": 1002
     },

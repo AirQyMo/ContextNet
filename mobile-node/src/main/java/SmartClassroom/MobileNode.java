@@ -13,6 +13,7 @@ import java.util.Arrays;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import ckafka.data.SwapData;
 import lac.cnclib.net.NodeConnection;
@@ -20,6 +21,8 @@ import lac.cnclib.sddl.message.ApplicationMessage;
 import lac.cnclib.sddl.message.Message;
 import main.java.ckafka.mobile.CKMobileNode;
 import main.java.ckafka.mobile.tasks.SendLocationTask;
+
+import static spark.Spark.*;
 
 /**
  * Mobile Node
@@ -42,14 +45,73 @@ public class MobileNode extends CKMobileNode {
      * @param args command line arguments
      */
     public static void main(String[] args) {
+        // Start WebSocket server in a separate thread
+        new Thread(() -> {
+            startWebSocketServer();
+        }).start();
+        
         Scanner keyboard = new Scanner(System.in);
         MobileNode mn = new MobileNode();
         mn.runMN(keyboard);
 
         // Calls close() to properly close MN method after shut down
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            stop();
             close();
         }));
+    }
+    
+    /**
+     * Start the WebSocket server for broadcasting alerts to web clients
+     */
+    private static void startWebSocketServer() {
+        try {
+            // Configure port
+            port(8080);
+            
+            // WebSocket endpoint MUST come before any route mapping
+            webSocket("/alerts", AlertWebSocketHandler.class);
+            
+            // Initialize routes (after WebSocket)
+            init();
+            
+            // Wait a bit for server to start
+            Thread.sleep(500);
+            
+            // Enable CORS for web clients
+            before((request, response) -> {
+                response.header("Access-Control-Allow-Origin", "*");
+                response.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+                response.header("Access-Control-Allow-Headers", "*");
+            });
+            
+            // Simple HTTP endpoint to check server status
+            get("/status", (req, res) -> {
+                res.type("application/json");
+                return String.format("{\"status\":\"running\",\"connections\":%d}", 
+                    AlertWebSocketHandler.getConnectionCount());
+            });
+            
+            // Serve a simple HTML page
+            get("/", (req, res) -> {
+                res.type("text/html");
+                return "<html><body>" +
+                       "<h1>Mobile Node WebSocket Server</h1>" +
+                       "<p>WebSocket endpoint: ws://localhost:8080/alerts</p>" +
+                       "<p>Connected clients: " + AlertWebSocketHandler.getConnectionCount() + "</p>" +
+                       "</body></html>";
+            });
+            
+            awaitInitialization();
+            
+            System.out.println("\n============================================");
+            System.out.println("WebSocket server started on port 8080");
+            System.out.println("WebSocket endpoint: ws://localhost:8080/alerts");
+            System.out.println("============================================\n");
+        } catch (Exception e) {
+            System.err.println("Error starting WebSocket server: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -135,19 +197,39 @@ public class MobileNode extends CKMobileNode {
         try {
             SwapData swp = fromMessageToSwapData(message);
             System.out.println("Topic: " + swp.getTopic());
+            
             if (swp.getTopic().equals("Ping")) {
                 message.setSenderID(this.mnID);
                 sendMessageToGateway(message);
-            }
-            if (swp.getTopic().equals("StudentAttendanceCheck")) {
+            } else if (swp.getTopic().equals("StudentAttendanceCheck")) {
                 String str = new String(swp.getMessage(), StandardCharsets.UTF_8);
                 System.out.println("Attendance check received. Message: " + str);
             } else {
+                // For all other messages
                 String str = new String(swp.getMessage(), StandardCharsets.UTF_8);
                 logger.info("Message: " + str);
+                
+                // Broadcast message to WebSocket clients
+                try {
+                    ObjectMapper mapper = new ObjectMapper();
+                    // Create a JSON object with metadata
+                    Map<String, Object> alertData = new HashMap<>();
+                    alertData.put("timestamp", System.currentTimeMillis());
+                    alertData.put("topic", swp.getTopic());
+                    alertData.put("message", str);
+                    
+                    String jsonMessage = mapper.writeValueAsString(alertData);
+                    AlertWebSocketHandler.broadcast(jsonMessage);
+                    System.out.println("[WebSocket] Message broadcasted to " + AlertWebSocketHandler.getConnectionCount() + " client(s)");
+                    logger.info("Message broadcasted to " + AlertWebSocketHandler.getConnectionCount() + " clients");
+                } catch (JsonProcessingException e) {
+                    logger.error("Error creating JSON for WebSocket: " + e.getMessage());
+                    e.printStackTrace();
+                }
             }
         } catch (Exception e) {
-            logger.error("Error reading new message received");
+            logger.error("Error reading new message received: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -271,7 +353,7 @@ public class MobileNode extends CKMobileNode {
         ObjectMapper objMapper = new ObjectMapper();
         ObjectNode contextObj = objMapper.createObjectNode();
 
-        String[] beacons = new String[] { "Beacon 2", "Beacon 3" };
+        String[] beacons = new String[] { "Beacon 3" };
 
         contextObj.put("beacons", Arrays.toString(beacons));
 
