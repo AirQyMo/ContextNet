@@ -12,6 +12,8 @@ services:
     volumes:
       - ./zk-single-kafka-single/zoo1/data:/data
       - ./zk-single-kafka-single/zoo1/datalog:/datalog
+    networks:
+      - contextnet
 
   kafka1:
     image: confluentinc/cp-kafka:5.3.0
@@ -31,6 +33,8 @@ services:
       - ./zk-single-kafka-single/kafka1/data:/var/lib/kafka/data
     depends_on:
       - zoo1
+    networks:
+      - contextnet
 
   gateway:
     image: registry.gitlab.com/lac-puc/context-net-kafka-core/gwlocal6:latest
@@ -51,3 +55,10 @@ services:
       gw.poolsize: 1000
     depends_on:
       - kafka1
+    networks:
+      - contextnet
+
+networks:
+  # Shared network used by all stacks (infra + apps)
+  contextnet:
+    name: contextnet-net
