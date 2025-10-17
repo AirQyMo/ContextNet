@@ -153,3 +153,4 @@ Agora você tem uma interface web moderna para visualizar os alertas de qualidad
 **Dica:** Deixe a interface aberta em um monitor secundário para monitoramento contínuo! 🖥️📱
 
 
+
